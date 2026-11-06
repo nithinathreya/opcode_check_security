@@ -42,6 +42,7 @@ pub struct StaticBaseline {
     pub total_instructions_audited: usize,
     pub cfg_node_count: usize,
     pub cfg_edge_count: usize,
+    pub cfi_landing_pads_found: usize,
     pub entry_point: u64,
     pub binary_sha256: String,
 }

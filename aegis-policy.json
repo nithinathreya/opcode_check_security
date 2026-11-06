@@ -1,0 +1,17 @@
+{
+  "allow_raw_syscalls_in_unbacked_ram": false,
+  "max_cumulative_risk_score": 70,
+  "canary_honeypot_paths": [
+    "/etc/shadow",
+    "/etc/passwd",
+    "/root/.ssh/id_rsa",
+    "/Users/admin/Library/Keychains/login.keychain-db",
+    "/var/db/dslocal/nodes/Default/users",
+    "C:\\Users\\Admin\\.ssh\\id_rsa",
+    "C:\\Windows\\System32\\config\\SAM"
+  ],
+  "allowed_outbound_ips": [],
+  "ransomware_entropy_threshold": 7.4,
+  "ransomware_burst_write_limit": 3,
+  "enforce_strict_w_xor_x": true
+}

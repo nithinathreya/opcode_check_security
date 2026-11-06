@@ -70,17 +70,21 @@ pub fn verify_and_detonate(
         }
         Err(violation) => {
             let arch = forced_arch.unwrap_or(TargetArch::X86_64);
+            let code = violation.exit_code();
             SandboxForensicReport {
                 arch,
                 binary_sha256: format!("{:x}", sha2::Sha256::digest(binary_bytes)),
+                section_entropy: 0.0,
                 is_packed: false,
                 static_instructions_verified: 0,
+                cfi_landing_pads_found: 0,
                 dynamic_ram_pages_verified: 0,
                 virtual_clock_fast_forwarded_secs: 0,
                 cow_files_modified: Vec::new(),
                 captured_network_flows: Vec::new(),
                 cumulative_risk_score: 100,
                 max_risk_threshold: p.max_cumulative_risk_score,
+                exit_code: code,
                 verdict: Err(violation),
                 ed25519_signature: None,
             }

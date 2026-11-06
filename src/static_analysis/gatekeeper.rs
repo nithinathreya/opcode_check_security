@@ -18,7 +18,17 @@ impl StaticGatekeeper {
         forced_arch: Option<TargetArch>,
         strict_syscall_check: bool,
     ) -> Result<StaticBaseline, SecurityViolation> {
-        let parsed = UniversalBinaryParser::parse(bytes, forced_arch).map_err(|e| {
+        Self::audit_binary_with_vaddr(bytes, forced_arch, None, strict_syscall_check)
+    }
+
+    /// Audits static opcodes with optional custom virtual address mapping.
+    pub fn audit_binary_with_vaddr(
+        bytes: &[u8],
+        forced_arch: Option<TargetArch>,
+        custom_vaddr: Option<u64>,
+        strict_syscall_check: bool,
+    ) -> Result<StaticBaseline, SecurityViolation> {
+        let parsed = UniversalBinaryParser::parse_with_vaddr(bytes, forced_arch, custom_vaddr).map_err(|e| {
             SecurityViolation::SignatureRuleHit {
                 rule_name: "CorruptOrMalformedBinaryHeader".to_string(),
                 description: e,
@@ -45,6 +55,7 @@ impl StaticGatekeeper {
 
         // 1. Audit static instructions for forbidden raw syscalls or evasion instructions
         let mut has_pac_bti = false;
+        let mut cfi_landing_pads_found = 0;
         let mut total_branches = 0;
 
         for insn in &decoded {
@@ -59,6 +70,7 @@ impl StaticGatekeeper {
 
             if insn.is_cfi_landing_pad {
                 has_pac_bti = true;
+                cfi_landing_pads_found += 1;
             }
 
             if insn.is_branch {
@@ -91,6 +103,7 @@ impl StaticGatekeeper {
             total_instructions_audited: decoded.len(),
             cfg_node_count: cfg.graph.node_count(),
             cfg_edge_count: cfg.graph.edge_count(),
+            cfi_landing_pads_found,
             entry_point: binary.entry_point,
             binary_sha256: binary.sha256.clone(),
         })

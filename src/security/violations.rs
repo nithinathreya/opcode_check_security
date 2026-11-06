@@ -107,6 +107,31 @@ pub enum SecurityViolation {
     },
 }
 
+impl SecurityViolation {
+    pub fn exit_code(&self) -> u8 {
+        match self {
+            Self::UnalignedArmInstruction { .. }
+            | Self::ForbiddenStaticOpcode { .. }
+            | Self::MissingArmPacOrBtiLandingPad { .. }
+            | Self::SuspiciousEntropyOrMissingText { .. }
+            | Self::SignatureRuleHit { .. } => 10,
+
+            Self::InlineHookDetected { .. }
+            | Self::UnbackedExecutableShellcode { .. }
+            | Self::SelfModifyingCodeViolation { .. }
+            | Self::EptWriteExecuteViolation { .. }
+            | Self::HardwareCfiViolation { .. } => 20,
+
+            Self::CanaryHoneypotTouched { .. }
+            | Self::RansomwareMassEncryption { .. }
+            | Self::ProcessHollowingOrInjection { .. }
+            | Self::UnauthorizedNetworkExfiltration { .. } => 30,
+
+            Self::CumulativeRiskThresholdExceeded { .. } => 40,
+        }
+    }
+}
+
 impl fmt::Display for SecurityViolation {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

@@ -8,14 +8,17 @@ use crate::security::violations::SecurityViolation;
 pub struct SandboxForensicReport {
     pub arch: TargetArch,
     pub binary_sha256: String,
+    pub section_entropy: f64,
     pub is_packed: bool,
     pub static_instructions_verified: usize,
+    pub cfi_landing_pads_found: usize,
     pub dynamic_ram_pages_verified: usize,
     pub virtual_clock_fast_forwarded_secs: u64,
     pub cow_files_modified: Vec<String>,
     pub captured_network_flows: Vec<String>,
     pub cumulative_risk_score: u32,
     pub max_risk_threshold: u32,
+    pub exit_code: u8,
     pub verdict: Result<String, SecurityViolation>,
     pub ed25519_signature: Option<String>,
 }

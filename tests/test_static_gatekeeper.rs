@@ -1,6 +1,6 @@
-use aegis_vm::static_analysis::entropy::shannon_entropy;
-use aegis_vm::static_analysis::gatekeeper::StaticGatekeeper;
-use aegis_vm::TargetArch;
+use aegis_cli::static_analysis::entropy::shannon_entropy;
+use aegis_cli::static_analysis::gatekeeper::StaticGatekeeper;
+use aegis_cli::TargetArch;
 
 #[test]
 fn test_shannon_entropy_calculation() {

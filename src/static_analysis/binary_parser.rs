@@ -30,6 +30,15 @@ impl UniversalBinaryParser {
     /// Supports ELF (Linux), PE (Windows), Mach-O (macOS single & universal fat binaries),
     /// and raw opcode streams.
     pub fn parse(bytes: &[u8], forced_arch: Option<TargetArch>) -> Result<ExtractedBinary, String> {
+        Self::parse_with_vaddr(bytes, forced_arch, None)
+    }
+
+    /// Parse an untrusted binary buffer into an `ExtractedBinary`, with optional custom base VADDR.
+    pub fn parse_with_vaddr(
+        bytes: &[u8],
+        forced_arch: Option<TargetArch>,
+        custom_vaddr: Option<u64>,
+    ) -> Result<ExtractedBinary, String> {
         if bytes.is_empty() {
             return Err("Binary buffer is empty".to_string());
         }
@@ -244,17 +253,18 @@ impl UniversalBinaryParser {
                 // Raw instruction stream fallback (e.g. raw shellcode, unit tests, microvm test vectors)
                 let arch = forced_arch.unwrap_or(TargetArch::X86_64);
                 let entropy = shannon_entropy(bytes);
+                let base = custom_vaddr.unwrap_or(0x1000_0000);
 
                 Ok(ExtractedBinary {
                     format: "Raw Machine Code Stream".to_string(),
                     arch,
-                    entry_point: 0x1000_0000,
+                    entry_point: base,
                     sha256,
                     text_section: bytes.to_vec(),
-                    text_vaddr: 0x1000_0000,
+                    text_vaddr: base,
                     sections: vec![SectionMetadata {
                         name: ".text (raw)".to_string(),
-                        virtual_address: 0x1000_0000,
+                        virtual_address: base,
                         size: bytes.len(),
                         entropy,
                         is_executable: true,

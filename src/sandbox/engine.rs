@@ -72,6 +72,58 @@ impl AegisUnifiedSandbox {
         }
     }
 
+    /// Run Stage 1 static gatekeeper audit on raw text section bytes.
+    pub fn run_stage1_static_gatekeeper(
+        &self,
+        text_section: &[u8],
+        base_gpa: u64,
+        strict_syscall_check: bool,
+    ) -> Result<StaticBaseline, SecurityViolation> {
+        let entropy = crate::static_analysis::entropy::shannon_entropy(text_section);
+        let is_packed = entropy > 7.2;
+
+        let decoded = self.verifier.disassembler.decode_stream(text_section, base_gpa)?;
+        let mut cfi_count = 0;
+
+        for insn in &decoded {
+            if insn.is_cfi_landing_pad {
+                cfi_count += 1;
+            }
+            if insn.is_syscall && strict_syscall_check {
+                return Err(SecurityViolation::ForbiddenStaticOpcode {
+                    arch: self.verifier.disassembler.arch(),
+                    address: insn.address,
+                    mnemonic: insn.mnemonic.clone(),
+                    reason: "Forbidden raw syscall found in static instruction stream".to_string(),
+                });
+            }
+        }
+
+        let cfg = crate::static_analysis::cfg::ControlFlowGraph::build(&decoded);
+        let page_size = self.verifier.disassembler.page_size();
+        let mut code_page_baselines = std::collections::HashMap::new();
+        for (page_idx, chunk) in text_section.chunks(page_size).enumerate() {
+            let page_addr = base_gpa + (page_idx * page_size) as u64;
+            code_page_baselines.insert(page_addr, chunk.to_vec());
+        }
+
+        use sha2::Digest;
+        let sha256 = format!("{:x}", sha2::Sha256::digest(text_section));
+
+        Ok(StaticBaseline {
+            arch: self.verifier.disassembler.arch(),
+            section_entropy: entropy,
+            is_packed_or_high_entropy: is_packed,
+            code_page_baselines,
+            total_instructions_audited: decoded.len(),
+            cfg_node_count: cfg.graph.node_count(),
+            cfg_edge_count: cfg.graph.edge_count(),
+            cfi_landing_pads_found: cfi_count,
+            entry_point: base_gpa,
+            binary_sha256: sha256,
+        })
+    }
+
     /// Detonate and monitor untrusted binary execution inside the MicroVM event loop.
     pub fn detonate_in_sandbox(
         &mut self,
@@ -189,18 +241,25 @@ impl AegisUnifiedSandbox {
         } else {
             None
         };
+        let exit_code = match &verdict {
+            Ok(_) => 0,
+            Err(v) => v.exit_code(),
+        };
 
         SandboxForensicReport {
             arch: baseline.arch,
             binary_sha256: baseline.binary_sha256.clone(),
+            section_entropy: baseline.section_entropy,
             is_packed: baseline.is_packed_or_high_entropy,
             static_instructions_verified: baseline.total_instructions_audited,
+            cfi_landing_pads_found: baseline.cfi_landing_pads_found,
             dynamic_ram_pages_verified: self.verified_ram_pages,
             virtual_clock_fast_forwarded_secs: self.anti_evasion.virtual_clock_offset_secs,
             cow_files_modified: self.fs_cow.modified_files(),
             captured_network_flows: self.network.pcap_flows.clone(),
             cumulative_risk_score: self.scorer.cumulative_score,
             max_risk_threshold: self.scorer.max_allowed_score,
+            exit_code,
             verdict,
             ed25519_signature,
         }

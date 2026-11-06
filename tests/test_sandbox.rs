@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use aegis_vm::arch::{Arm64Disassembler, X86_64Disassembler};
-use aegis_vm::sandbox::engine::{AegisUnifiedSandbox, SandboxRuntimeEvent};
-use aegis_vm::sandbox::policy::SandboxPolicy;
-use aegis_vm::security::violations::SecurityViolation;
-use aegis_vm::static_analysis::gatekeeper::StaticGatekeeper;
-use aegis_vm::TargetArch;
+use aegis_cli::arch::{Arm64Disassembler, X86_64Disassembler};
+use aegis_cli::sandbox::engine::{AegisUnifiedSandbox, SandboxRuntimeEvent};
+use aegis_cli::sandbox::policy::SandboxPolicy;
+use aegis_cli::security::violations::SecurityViolation;
+use aegis_cli::static_analysis::gatekeeper::StaticGatekeeper;
+use aegis_cli::TargetArch;
 
 #[test]
 fn test_clean_arm64_sandbox_execution() {

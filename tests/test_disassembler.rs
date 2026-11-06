@@ -1,5 +1,5 @@
-use aegis_vm::arch::{ArchDisassembler, Arm64Disassembler, X86_64Disassembler};
-use aegis_vm::TargetArch;
+use aegis_cli::arch::{ArchDisassembler, Arm64Disassembler, X86_64Disassembler};
+use aegis_cli::TargetArch;
 
 #[test]
 fn test_x86_disassembly_and_syscall_detection() {
