@@ -1,0 +1,24 @@
+[package]
+name = "aegis-vm"
+version = "0.2.0"
+edition = "2021"
+description = "Unified Static/Dynamic Opcode Verifier & Behavioral MicroVM Sandbox (x86_64 & ARM64)"
+authors = ["AegisVM Security Team"]
+
+[dependencies]
+# Binary Parsing & Hashing
+goblin = "0.8"
+sha2 = "0.10"
+ed25519-dalek = { version = "2.1", features = ["rand_core"] }
+rand = "0.8"
+
+# Multi-Architecture Opcode Disassemblers & CFG
+iced-x86 = { version = "1.21", features = ["decoder", "instr_info"] }
+petgraph = { version = "0.6", features = ["graphmap"] }
+
+# Serialization, CLI & Error Handling
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+clap = { version = "4.5", features = ["derive"] }
+bad64 = "0.6"
